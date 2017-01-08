@@ -20,8 +20,11 @@ All in all this was a great learning experience. I found it a great refresher on
 http://people.csail.mit.edu/plaat/mtdf.html
 ####Minimax and alpha-beta pruning, scoring
 https://www.gimu.org/connect-four-js/
+
 https://en.wikipedia.org/wiki/Alpha%E2%80%93beta_pruning
 ####Transposition tables
 https://en.wikipedia.org/wiki/Transposition_table
+
 https://web.archive.org/web/20070822204120/www.seanet.com/~brucemo/topics/hashing.htm
+
 https://web.archive.org/web/20070822204038/http://www.seanet.com/~brucemo/topics/zobrist.htm
