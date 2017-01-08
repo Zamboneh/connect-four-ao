@@ -21,10 +21,10 @@ public class Main {
 				PrintWriter out = new PrintWriter(client.getOutputStream(), true);
 				BufferedReader in = new BufferedReader(new InputStreamReader(client.getInputStream()));
 			) {
-				String recv = "";
-				String line = "";
-				recv = in.readLine();
+				String recv = in.readLine();
 				
+				// input will be formatted as "<board json>|<player>"
+				//                         e.g. [[0,0,0...]]|player-one
 				String boardIn = recv.substring(0, recv.indexOf("|"));
 				String playerIn = recv.substring(recv.indexOf("|") + 1, recv.length());
 				
@@ -38,7 +38,7 @@ public class Main {
 				out.flush();
 				
 			} catch (IOException e) {
-				System.out.println("Exception caught when trying to listen");
+				System.out.println("Exception caught");
                 System.out.println(e.getMessage());
 			}
 		}

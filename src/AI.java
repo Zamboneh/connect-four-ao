@@ -1,6 +1,8 @@
 import java.util.*;
 
 public class AI {
+	// the AI class is the meaty portion of the program.
+	
 	GameBoard theBoard;
 	int me;
 	TranspositionTable transTable;
@@ -24,6 +26,7 @@ public class AI {
 	}
 	
 	public int returnRandomMove() {
+		// returns a random valid move - deprecated, really
 		ArrayList<Integer> validMoves = theBoard.getValidMoves();
 		Random r = new Random();
 		int move = validMoves.get(r.nextInt(validMoves.size()));
@@ -32,11 +35,14 @@ public class AI {
 	
 	// minimax algorithm
 	public int generateMinimaxMove() {
+		// uses the minimax algorithm below to find the best move
 		System.out.println("Thinking...");
-		MoveInfo myMove = maximizePlay(theBoard, turn, 10, -1000000, 1000000, true);
+		MoveInfo myMove = minimax(theBoard, turn, 10, -1000000, 1000000, true);
 		System.out.println("I ended up with move " + myMove.move + " with a score of " + myMove.score);
 		return myMove.move;
 	}
+	
+	// initial attempts at an MTD(f) that I couldn't get working correctly
 	
 	/*public int generateMTDFMove() {
 		System.out.println("Thinking...");
@@ -76,48 +82,56 @@ public class AI {
 		return theMove;
 	}*/
 	
-	private MoveInfo maximizePlay(GameBoard gb, int turn, int depth, int alpha, int beta, boolean isMax) {
-		// look up position in table
+	// The minimax algorithm!
+	private MoveInfo minimax(GameBoard gb, int turn, int depth, int alpha, int beta, boolean isMax) {
+		// we want to keep track of the turns, because we want to win SOONER! not later. that was a major bug.
+		// isMax defines if we're maximizing on this turn or minimizing
+		
+		// firstly, look up position in transposition table
 		MoveInfo lookup = transTable.probeHash(gb, turn, alpha, beta);
 		if (lookup.score != -1) {
+			// oh look, we've seen this before! let's use it.
 			return lookup;
 		}
 		
+		// not in the table, score the board
 		int boardScore = gb.scoreBoard();
-		// break if needed
+		
+		// break if needed, i.e. winning position or max search depth
 		if (gb.isLeafFinished(depth, boardScore)) {
 			transTable.recordHash(gb, turn, boardScore, 1, -1);
 			return new MoveInfo(-1, boardScore, turn);
 		}
 		
+		// my turn, or the opponent's turn?
 		if (isMax) {
 		
 			MoveInfo max = new MoveInfo(-1, -99999, -1);
 			
 			// check all possible moves
 			for (int c = 0; c < 7; c++) {
-				if (depth == 8) {
-					//System.out.println("Checking tree for move " + c + "...");
-					//System.out.println("\tRight now, max = [" + max.getX() + ", " + max.getY() + "]");
-				}
+				
+				// copy the board
 				GameBoard copiedBoard = new GameBoard(gb);
 				
+				// we only want to examine a move if it's valid
 				if (copiedBoard.getPos(c, 0) == 0) {
 					copiedBoard.makeMove(c);
 					
-					MoveInfo nextMove = maximizePlay(copiedBoard, turn + 1, depth - 1, alpha, beta, false);
-					//nextMove.score += depth;
-					// evaluate
+					// recursively examine further moves
+					MoveInfo nextMove = minimax(copiedBoard, turn + 1, depth - 1, alpha, beta, false);
+					
+					// evaluate the next move and keep the one that maximizes our score
 					if (max.move == -1 || nextMove.score > max.score) {
-						//System.out.println("[MAX] [d=" + depth + "] TRUMPED! Move " + c + " scores " + nextMove.getY());
 						max.move = c;
 						max.score = nextMove.score;
 						max.turn = nextMove.turn;
 					} else if (nextMove.score == 100000 && max.score == 100000 && nextMove.turn < max.turn) {
-						System.out.println("Tied score at a sooner turn!");
+						// we get here if we find a winning position at a closer turn - we don't want to delay our inevitable win
 						max.move = c;
 						max.turn = nextMove.turn;
 					}
+					// alpha-beta pruning
 					if (max.score > alpha)
 						alpha = max.score;
 					if (alpha >= beta) {
@@ -129,6 +143,7 @@ public class AI {
 			transTable.recordHash(gb, turn, max.score, 2, max.move);
 			return max;
 		} else {
+			// we're minimizing - you dirty trickster; trying to outsmart me, eh?
 			MoveInfo min = new MoveInfo(-1, 99999, depth);
 		
 			for (int c = 0; c < 7; c++) {
@@ -137,17 +152,18 @@ public class AI {
 				if (copiedBoard.getPos(c, 0) == 0) {
 					copiedBoard.makeMove(c);
 					
-					MoveInfo nextMove = maximizePlay(copiedBoard, turn + 1, depth - 1, alpha, beta, true);
-					// evaluate
+					MoveInfo nextMove = minimax(copiedBoard, turn + 1, depth - 1, alpha, beta, true);
+					// evaluate and keep track of minimizing score
 					if (min.move == -1 || nextMove.score < min.score) {
-						//System.out.println("[MIN] [d=" + depth + "] TRUMPED! Move " + c + " scores " + nextMove.getY());
 						min.move = c;
 						min.score = nextMove.score;
 						min.turn = nextMove.turn;
 					} else if (nextMove.score == -100000 && nextMove.score == -100000 && nextMove.turn > min.turn) {
+						// opponent probably wants to speed up their inevitable win too, unfortunately
 						min.move = c;
 						min.turn = nextMove.turn;
 					}
+					// alpha-beta pruning
 					if (min.score < beta)
 						beta = min.score;
 					if (alpha >= beta) {

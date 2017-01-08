@@ -1,6 +1,10 @@
 import java.util.*;
 
 public class TranspositionTable {
+	// the transposition table stores board states in the form of
+	// Zobrist keys, as well as their scores and respective best moves
+	// so we don't have to calculate any of that over again
+	
 	// map of zobrist keys and elements
 	TreeMap<Long, TranspositionElement> elements;
 	
@@ -23,25 +27,27 @@ public class TranspositionTable {
 		toPlayZobrist = r.nextLong();
 	}
 	
+	// looks up a zobrist key in the map (with relevant alpha-beta information)
 	public MoveInfo probeHash(GameBoard gb, int t, int a, int b) {
 		long z = createZobristKey(gb);
 		if (elements.containsKey(z)) {
-			//System.out.println("[ZOBRIST] Table contained this position!");
 			TranspositionElement te = elements.get(z);
 			if (te.move.turn <= t) {
 				if (te.flags == 1) // exact value
 					return te.move;
-				if (te.flags == 2 && te.move.score <= a) // irrelevant alpha
+				if (te.flags == 2 && te.move.score <= a) // relevant alpha
 					return new MoveInfo(te.move.move, a, te.move.turn);
-				if (te.flags == 3 && te.move.score >= b) // irrelevant beta
+				if (te.flags == 3 && te.move.score >= b) // relevant beta
 					return new MoveInfo(te.move.move, b, te.move.turn);
 			}
 		}
+		// welp, this position's not in the table
+		// (the minimax algorithm knows what to do with this)
 		return new MoveInfo(-1, -1, -1);
 	}
 	
+	// stores a previously-unencountered position in the transposition table
 	public void recordHash(GameBoard gb, int d, int v, int f, int m) {
-		//System.out.println("[ZOBRIST] New position, recording.");
 		TranspositionElement te = new TranspositionElement();
 		te.hashKey = createZobristKey(gb);
 		te.flags = f;
@@ -50,6 +56,7 @@ public class TranspositionTable {
 		elements.put(te.hashKey, te);
 	}
 	
+	// creates a zobrist key from a given board state
 	public long createZobristKey(GameBoard gb) {
 		long key = 0L;
 		
